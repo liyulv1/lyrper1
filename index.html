@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -314,13 +315,35 @@
         return now.getDay();
     }
 
-    function highlightToday() {
-        const today = showCurrentDate();
-        const headers = document.getElementById('schedule-header').children;
-        if (today === 0) headers[7].classList.add('bg-orange-200', 'font-bold');
-        else headers[today].classList.add('bg-orange-200', 'font-bold');
-    }
+   // 高亮：只有【当前真实周】才高亮今天周几，其他周不高亮
+// 高亮：只有真实当前周才高亮表头星期 + 周次文字
+// 高亮：只有真实当前周才高亮表头星期 + 周次文字（只变色，不加粗）
+function highlightToday() {
+  const headers = document.getElementById('schedule-header').children;
+  const weekText = document.getElementById('current-week-text');
+  const realWeek = calcCurrentWeek();
 
+  // 清除所有表头高亮
+  for (let i = 1; i < headers.length; i++) {
+    headers[i].classList.remove('bg-orange-200', 'font-bold');
+  }
+
+  // 清除周次高亮（只移除颜色）
+  weekText.classList.remove('text-primary');
+
+  // 只有当前周 == 真实周，才高亮
+  if (currentWeek === realWeek) {
+    // 高亮星期表头
+    const today = showCurrentDate();
+    if (today === 0) {
+      headers[7].classList.add('bg-orange-200', 'font-bold');
+    } else {
+      headers[today].classList.add('bg-orange-200', 'font-bold');
+    }
+    // 高亮“第 X 周”文字 —— 只变色，不加粗
+    weekText.classList.add('text-primary');
+  }
+}
     // 开学日期设置
     function getSemesterStartDate() {
         let saved = localStorage.getItem('semesterStartDate');
@@ -367,16 +390,17 @@
     });
 
     // 更新周次显示
-    function updateWeekDisplay() {
-        document.getElementById('current-week-text').innerText = `第 ${currentWeek} 周`;
-    }
+  function updateWeekDisplay() {
+  document.getElementById('current-week-text').innerText = `第 ${currentWeek} 周`;
+  highlightToday(); // 切换周时自动判断高亮
+}
 
     // 渲染课程
     function renderCourses() {
         const container = document.getElementById('course-schedule');
         if (!container) return;
         container.innerHTML = '';
-        updateWeekDisplay();
+      
         if (!courses || courses.length === 0) return;
 
         courses.forEach((item, i) => {
@@ -400,13 +424,13 @@
             el.style.top = `${(s - 1) * 90}px`;
             el.style.height = `${rows * 90 - 5}px`;
             el.style.zIndex = 999;
-
-            el.innerHTML = `
-                <div class="font-bold text-xs">${item.name}</div>
-                <div class="text-[11px] opacity-90">${item.room}</div>
-                <div class="text-[10px] opacity-80">${startW}-${endW}周</div>
-                <button onclick="delCourse(${i})" class="absolute right-1 bottom-1 text-[10px] opacity-70">删除</button>
-            `;
+el.innerHTML = `
+    <div class="font-bold text-xs">${item.name}</div>
+    <div class="text-[11px] opacity-90">${item.teacher}</div>  <!-- 老师 -->
+    <div class="text-[11px] opacity-90">${item.room}</div>    <!-- 教室 -->
+    <div class="text-[10px] opacity-80">${startW}-${endW}周</div>
+    <button onclick="delCourse(${i})" class="absolute right-1 bottom-1 text-[10px] opacity-70">删除</button>
+`;
             container.appendChild(el);
         });
     }
